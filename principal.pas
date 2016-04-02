@@ -4,7 +4,7 @@
 // -- Creado usando Codetyphon 5.70                                                               -- //
 // -- Liberado como código fuente abierto                                                         -- //
 // --                                                                                             -- //
-// -- Versión candidata a final. Liberada con fecha 20/03/2016                                    -- //
+// -- Versión final. Liberada con fecha 02/04/2016                                                -- //
 // ------------------------------------------------------------------------------------------------- //
 
 unit principal;
@@ -18,7 +18,7 @@ uses
   TplLCDLineUnit, RxVersInfo, BGRALabelFX, DTAnalogGauge, BCButton,
   BGRAFlashProgressBar, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, ComboEx, Spin, Grids, IdComponent, LCLType, pingsend,
-  LCLIntf;
+  LCLIntf, Menus;
 
 type
 
@@ -68,12 +68,12 @@ type
     TabSheet3: TTabSheet; // Tercera página de tabulación (test de tracert)
     TabSheet4: TTabSheet; // Cuarta página de tabulación (información)
     Timer1: TTimer; // Temporizador para mostrar datos del test de velocidad
-    TrayIcon1: TTrayIcon; // Icono en bandeja del sistema
     procedure AbreBandaAncha(Sender: TObject); // Abre en el navegador por defecto la página del portal bandaancha.eu
     procedure AbreForoOficial(Sender: TObject); // Abre en el navegador por defecto la página del foro oficial de BASpeed
     procedure CambiaNombreServidor(Sender: TObject); // Rutina que le dice al test de ping cuando debe buscar el nombre del nodo
     procedure FormActivate(Sender: TObject); // Rutina al iniciar el programa
     procedure MuestraDatos(Sender: TObject); // Rutina que se activa en cada intervalo del temporizador
+    procedure Salir(Sender: TObject);
     procedure TestPing(Sender: TObject); // Rutina que inicia el test de ping
     procedure TestTracert(Sender: TObject); // Rutina que inicia el test de tracert
     procedure TestVelocidad(Sender: TObject); // Rutina que se activa cuando se inicia el test de velocidad
@@ -151,6 +151,7 @@ var
   ipintermedia: string; // IP intermedia del nodo actual dentro del test de tracert
   testtracertcancelado: boolean; // Indica cuando quiere el usuario cancelar el test de tracert
   testtracertiniciado: boolean; // Indica si está activo el test de tracert
+  px,py: integer; // Posición de la ventana en la pantalla cuando se miniza en la bandeja del sistema
 
 implementation
 
@@ -362,7 +363,7 @@ begin
      else
          if (AWorkMode=TWorkMode.wmRead) and (cancelartestvelocidad=True) then
             begin
-                 web.Disconnect;
+                 web.Disconnect; // Si se cancela el test de velocidad, desconecta del servidor para terminar el test de velocidad
             end;
 end;
 
@@ -403,13 +404,13 @@ procedure TForm1.FormActivate(Sender: TObject);
 var
    dia,mes,anio: word;
    fecha: tdatetime;
-   cadanio,cadmes,caddia: string;
+   {cadanio,cadmes,caddia: string;}
 
 begin
      testvelocidadiniciado:=False; // Variable que indica cuando se ha iniciado un test de velocidad
      fileage('BASpeedv10-x32.exe',fecha,true); // Se recoge la fecha de creación del archivo ejecutable
      decodedate(fecha,anio,mes,dia); // se decodifica la fecha en campos de año, mes y dia
-     if (mes<10) then                // Rutina para poner el mes con un 0 delante si es menor de 10
+     {if (mes<10) then                // Rutina para poner el mes con un 0 delante si es menor de 10
         cadmes:='0'+inttostr(mes)
      else
          cadmes:=inttostr(mes);
@@ -417,14 +418,8 @@ begin
         caddia:='0'+inttostr(dia)
      else
          caddia:=inttostr(dia);
-     cadanio:=inttostr(anio);
-     bgralabelfx3.Caption:='Versión: '+rxversioninfo1.FileVersion+'.'+cadanio+cadmes+caddia+'.x86-32bits.beta'; // Información de versión del programa
-     trayicon1.BalloonTitle:='Bienvenido a BASpeed v10 O.S.E. 32 bits'; // Datos para el globo de información flotante
-     trayicon1.BalloonHint:='Bienvenido a BASpeed v10 Open Source Edition. El programa está funcionando en el PC.';
-     trayicon1.BalloonFlags:=bfinfo; // Tipo de balón informativo
-     trayicon1.BalloonTimeout:=5000; // Tiempo visible el balón informativo
-     trayicon1.ShowBalloonHint; // Muestra el balón informativo
-
+     cadanio:=inttostr(anio);}
+     bgralabelfx3.Caption:='Versión: '+rxversioninfo1.FileVersion+' (32 bits)'; // Información de versión del programa
 end;
 
 procedure TForm1.CambiaNombreServidor(Sender: TObject);
@@ -442,7 +437,7 @@ end;
 
 procedure TForm1.AbreBandaAncha(Sender: TObject);
 begin
-     OpenURL('http://bandaancha.eu');
+     OpenURL('http://bandaancha.eu'); // Abre en el navegador por defecto la página de bandaancha.eu
 end;
 
 procedure TForm1.MuestraDatos(Sender: TObject);
@@ -483,6 +478,11 @@ begin
                                    'ha sido de '+inttostr(vmaxima)+' Kbps ('+floattostrf(vmaxima/1000,fffixed,10,2)+' Mbps)'),pchar('Test de velocidad finalizado'),
                                    MB_OK+MB_ICONINFORMATION); // Muestra la información de la velocidad máxima al acabar el test de velocidad
         end;
+end;
+
+procedure TForm1.Salir(Sender: TObject);
+begin
+     Application.Terminate; // Termina la ejecución de la aplicación y cierra la ventana de la misma
 end;
 
 procedure TForm1.TestPing(Sender: TObject);

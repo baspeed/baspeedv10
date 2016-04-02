@@ -20,7 +20,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="490"/>
+      <BuildNr Value="530"/>
       <Language Value="040A"/>
       <Attributes pvaDebug="True"/>
       <StringTable CompanyName="BASpeed Software" FileDescription="BASpeed v10 - Test de velocidad y utilidades" InternalName="BASpeed" LegalCopyright="Copyright (c) José Ignacio Legido (djnacho), 2006-2016" LegalTrademarks="BASpeed, marca registrada por djnacho (BASpeed Software), 2006-2016" OriginalFilename="BASpeedv10.exe" ProductName="BASpeed" ProductVersion="10.0.0.0"/>
@@ -36,40 +36,43 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="11">
+    <RequiredPackages Count="12">
       <Item1>
-        <PackageName Value="FCL"/>
+        <PackageName Value="lz_googleapi"/>
       </Item1>
       <Item2>
-        <PackageName Value="LCLBase"/>
+        <PackageName Value="FCL"/>
       </Item2>
       <Item3>
-        <PackageName Value="pl_synapse"/>
+        <PackageName Value="LCLBase"/>
       </Item3>
       <Item4>
-        <PackageName Value="pl_indy"/>
+        <PackageName Value="pl_synapse"/>
       </Item4>
       <Item5>
-        <PackageName Value="pl_cindy"/>
+        <PackageName Value="pl_indy"/>
       </Item5>
       <Item6>
-        <PackageName Value="pl_BGRAuecontrols"/>
+        <PackageName Value="pl_cindy"/>
       </Item6>
       <Item7>
-        <PackageName Value="pl_excontrols"/>
+        <PackageName Value="pl_BGRAuecontrols"/>
       </Item7>
       <Item8>
-        <PackageName Value="pl_eccontrols"/>
+        <PackageName Value="pl_excontrols"/>
       </Item8>
       <Item9>
-        <PackageName Value="pl_rx"/>
+        <PackageName Value="pl_eccontrols"/>
       </Item9>
       <Item10>
-        <PackageName Value="pl_bgracontrols"/>
+        <PackageName Value="pl_rx"/>
       </Item10>
       <Item11>
-        <PackageName Value="LCL"/>
+        <PackageName Value="pl_bgracontrols"/>
       </Item11>
+      <Item12>
+        <PackageName Value="LCL"/>
+      </Item12>
     </RequiredPackages>
     <Units Count="2">
       <Unit0>
