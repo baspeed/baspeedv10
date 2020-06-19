@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------------------------------- //
 // -- Código fuente de BASpeed v10                                                                -- //
 // -- Codificado originalmente por José Ignacio Legido (usuario de djnacho de bandaancha.eu)      -- //
-// -- Creado usando Codetyphon 5.70                                                               -- //
+// -- Creado usando Codetyphon 7.10                                                               -- //
 // -- Liberado como código fuente abierto                                                         -- //
 // --                                                                                             -- //
-// -- Versión final. Liberada con fecha 02/04/2016                                                -- //
+// -- Versión final. Liberada con fecha 20/06/2020                                                -- //
 // ------------------------------------------------------------------------------------------------- //
 
 unit principal;
@@ -14,7 +14,7 @@ unit principal;
 interface
 
 uses
-  Classes, SysUtils, IdHTTP, IdIOHandlerStack, TplLabelUnit,
+  Classes, SysUtils, IdHTTP, IdIOHandlerStack, idSSLOpenSSL, TplLabelUnit,
   TplLCDLineUnit, RxVersInfo, BGRALabelFX, DTAnalogGauge, BCButton,
   BGRAFlashProgressBar, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, ComboEx, Spin, Grids, IdComponent, LCLType, pingsend,
@@ -95,6 +95,7 @@ type
               web: TIdHTTP; // objeto HTTP que accede al arhivo de descarga
               mem: TMemoryStream; // buffer de entrada de datos en memoria
               hnd: TIdIOHandlerStack; // Controlador I/O del objeto HTTP
+              hnds: TIdSSLIOHandlerSocketOpenSSL; // Controladador I/O bajo capa SSL del objeto HTTP (para test de bandaancha.eu y todos aquellos bajo capa HTTPS)
               tam: uint64; // Tamaño del archivo del test de velocidad
               velocidad: uint64; // Velocidad de la descarga
               ti,tf,tt: int64;  // Tiempo inicial, final y total del test de velocidad
@@ -155,7 +156,7 @@ var
 
 implementation
 
-{$R *.lfm}
+{$R *.frm}
 
 { TForm1 }
 
@@ -374,23 +375,46 @@ begin
      mem:=tmemorystream.Create; // Se crea el buffer de entrada de datos
      mem.SetSize(TAM_BUFFER); // 512 KB de buffer de entrada de datos
      web:=tidhttp.Create; // Se crea el objeto de acceso al archivo HTTP
-     hnd:=tidiohandlerstack.Create(web); // Crea el controlador del objeto HTTP
-     hnd.RecvBufferSize:=TAM_BUFFER; // Inicializa tamaño buffer recepción datos
-     hnd.ConnectTimeout:=TIEMPO_ESPERA_SERVIDOR; // Tiempo de espera hasta conexión con servidor
-     hnd.ConnectTimeout:=TIEMPO_ESPERA_DATOS; // Tiempo de espera hasta recepción de datos en buffer de recepción
-     web.IOHandler:=hnd; // Le dice al objeto HTTP cual es su controlador
-     web.OnWork:=@CalculaDatos; // Le dice al objeto HTTP cual es la rutina que debe lanzar cada vez que se llena el buffer de recepción
-     inc(hilosactivos);
-     try
-        web.Get(url,mem); // Descargar archivo HTTP designado por url al buffer mem
-     except
-           on Exception do
-                          begin
-                               terminado:=true; // Si ocurre cualquier error no hacer nada
-                               velocidad:=0; // Se pone la velocidad de descarga del hilo a 0
-                               dec(hilosactivos);
-                          end;
-     end;
+     if (form1.ComboBoxEx1.ItemIndex<>1) then
+        begin
+             hnd:=tidiohandlerstack.Create(web); // Crea el controlador del objeto HTTP
+             hnd.RecvBufferSize:=TAM_BUFFER; // Inicializa tamaño buffer recepción datos
+             hnd.ConnectTimeout:=TIEMPO_ESPERA_SERVIDOR; // Tiempo de espera hasta conexión con servidor
+             hnd.ConnectTimeout:=TIEMPO_ESPERA_DATOS; // Tiempo de espera hasta recepción de datos en buffer de recepción
+             web.IOHandler:=hnd; // Le dice al objeto HTTP cual es su controlador
+             web.OnWork:=@CalculaDatos; // Le dice al objeto HTTP cual es la rutina que debe lanzar cada vez que se llena el buffer de recepción
+             inc(hilosactivos);
+             try
+                web.Get(url,mem); // Descargar archivo HTTP designado por url al buffer mem
+             except
+                   on Exception do
+                                begin
+                                     terminado:=true; // Si ocurre cualquier error no hacer nada
+                                     velocidad:=0; // Se pone la velocidad de descarga del hilo a 0
+                                     dec(hilosactivos);
+                                end;
+             end;
+        end
+     else
+         begin
+             hnds:=TIdSSLIOHandlerSocketOpenSSL.Create(web); // Crea el controlador del objeto HTTP
+             hnds.RecvBufferSize:=TAM_BUFFER; // Inicializa tamaño buffer recepción datos
+             hnds.ConnectTimeout:=TIEMPO_ESPERA_SERVIDOR; // Tiempo de espera hasta conexión con servidor
+             hnds.ConnectTimeout:=TIEMPO_ESPERA_DATOS; // Tiempo de espera hasta recepción de datos en buffer de recepción
+             web.IOHandler:=hnds; // Le dice al objeto HTTP cual es su controlador
+             web.OnWork:=@CalculaDatos; // Le dice al objeto HTTP cual es la rutina que debe lanzar cada vez que se llena el buffer de recepción
+             inc(hilosactivos);
+             try
+                web.Get(url,mem); // Descargar archivo HTTP designado por url al buffer mem
+             except
+                   on Exception do
+                                begin
+                                     terminado:=true; // Si ocurre cualquier error no hacer nada
+                                     velocidad:=0; // Se pone la velocidad de descarga del hilo a 0
+                                     dec(hilosactivos);
+                                end;
+             end;
+        end;
      dec(hilosactivos);
      velocidad:=0; // Se pone la velocidad de descarga del hilo a 0
      mem.Free; // Liberar el buffer de entrada de datos
@@ -419,7 +443,7 @@ begin
      else
          caddia:=inttostr(dia);
      cadanio:=inttostr(anio);}
-     bgralabelfx3.Caption:='Versión: '+rxversioninfo1.FileVersion+' (32 bits)'; // Información de versión del programa
+     bgralabelfx3.Caption:='Versión: '+rxversioninfo1.FileVersion; // Información de versión del programa
 end;
 
 procedure TForm1.CambiaNombreServidor(Sender: TObject);
@@ -546,10 +570,10 @@ begin
                       tvelocidad[contador]:=TDescarga.Create(true); // Crea un hilo de ejecución
                       tvelocidad[contador].FreeOnTerminate:=False;  // No se libera la memoria automáticamente
                       case comboboxex1.ItemIndex of
-                           0 : tvelocidad[contador].url:='http://www.corie.onored.com/cienmegabytes';
-                           1 : tvelocidad[contador].url:='http://testvelocidad.eu/speed-test/dummy-download.bin';
+                           0 : tvelocidad[contador].url:='http://speedtestmadrid2.vodafone.es/speedtest/random4000x4000.jpg';
+                           1 : tvelocidad[contador].url:='https://testvelocidad.eu/speed-test/download.bin';
                            2 : tvelocidad[contador].url:='http://speedtest.tele2.net/100MB.zip';
-                           3 : tvelocidad[contador].url:='http://speedtest.serverius.net/files/100mb.bin';
+                           3 : tvelocidad[contador].url:='http://download.microsoft.com/download/0/A/F/0AFB5316-3062-494A-AB78-7FB0D4461357/Windows_Win7SP1.7601.17514.101119-1850.IA64FRE.Symbols.msi';
                            4 : tvelocidad[contador].url:='http://speedtest.ams01.softlayer.com/downloads/test100.zip';
                            5 : tvelocidad[contador].url:='http://speedtest.london.linode.com/100MB-london.bin';
                       end;
@@ -605,4 +629,3 @@ begin
 end;
 
 end.
-
