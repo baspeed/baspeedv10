@@ -1,6 +1,7 @@
 ﻿# BASpeed v10
 Código fuente de BASpeed v10<br>
 v10.0.1.552 Versión final<br>
+Compilado bajo CodeTyphon (https://www.pilotlogic.com/sitejoom/index.php/projects/codetyphon-studio.html) v7.1
 Versión actualizada el 20/06/2020<br><br>
 # ¡¡Importante!!
 El test de bandaancha.eu necesita las librerias OpenSSL para poder funcionar. Se puede descargar desde https://indy.fulgan.com/SSL/<br>
